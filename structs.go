@@ -79,46 +79,56 @@ type KordisResponseProfile struct {
 	} `json:"result"`
 }
 
+type KordisResultAgenda struct {
+	ReservationID int `json:"reservation_id"`
+	Rooms         []struct {
+		Links     []interface{} `json:"links"`
+		RoomID    int           `json:"room_id"`
+		Name      string        `json:"name"`
+		Floor     string        `json:"floor"`
+		Campus    string        `json:"campus"`
+		Color     string        `json:"color"`
+		Latitude  string        `json:"latitude"`
+		Longitude string        `json:"longitude"`
+	} `json:"rooms"`
+	Type       string      `json:"type"`
+	Modality   string      `json:"modality"`
+	Author     int         `json:"author"`
+	CreateDate interface{} `json:"create_date"`
+	StartDate  int64       `json:"start_date"`
+	EndDate    int64       `json:"end_date"`
+	State      string      `json:"state"`
+	Comment    interface{} `json:"comment"`
+	Classes    interface{} `json:"classes"`
+	Name       string      `json:"name"`
+	Discipline struct {
+		Coef             interface{}   `json:"coef"`
+		Ects             interface{}   `json:"ects"`
+		Name             string        `json:"name"`
+		Teacher          string        `json:"teacher"`
+		Trimester        string        `json:"trimester"`
+		Year             int           `json:"year"`
+		Links            []interface{} `json:"links"`
+		HasDocuments     interface{}   `json:"has_documents"`
+		HasGrades        interface{}   `json:"has_grades"`
+		NbStudents       int           `json:"nb_students"`
+		RcID             int           `json:"rc_id"`
+		SchoolID         int           `json:"school_id"`
+		StudentGroupID   int           `json:"student_group_id"`
+		StudentGroupName string        `json:"student_group_name"`
+		SyllabusID       interface{}   `json:"syllabus_id"`
+		TeacherID        int           `json:"teacher_id"`
+		TrimesterID      int           `json:"trimester_id"`
+	} `json:"discipline"`
+	Teacher               string        `json:"teacher"`
+	Promotion             string        `json:"promotion"`
+	PrestationType        int           `json:"prestation_type"`
+	IsElectronicSignature bool          `json:"is_electronic_signature"`
+	Links                 []interface{} `json:"links"`
+}
 type KordisResponseAgenda struct {
-	ResponseCode int    `json:"response_code"`
-	Version      string `json:"version"`
-	Result       []struct {
-		ReservationID int         `json:"reservation_id"`
-		Rooms         interface{} `json:"rooms"`
-		Type          string      `json:"type"`
-		Modality      string      `json:"modality"`
-		Author        int         `json:"author"`
-		CreateDate    interface{} `json:"create_date"`
-		StartDate     int64       `json:"start_date"`
-		EndDate       int64       `json:"end_date"`
-		State         string      `json:"state"`
-		Comment       interface{} `json:"comment"`
-		Classes       interface{} `json:"classes"`
-		Name          string      `json:"name"`
-		Discipline    struct {
-			Coef             interface{}   `json:"coef"`
-			Ects             interface{}   `json:"ects"`
-			Name             string        `json:"name"`
-			Teacher          string        `json:"teacher"`
-			Trimester        string        `json:"trimester"`
-			Year             int           `json:"year"`
-			Links            []interface{} `json:"links"`
-			HasDocuments     interface{}   `json:"has_documents"`
-			HasGrades        interface{}   `json:"has_grades"`
-			NbStudents       int           `json:"nb_students"`
-			RcID             int           `json:"rc_id"`
-			SchoolID         int           `json:"school_id"`
-			StudentGroupID   int           `json:"student_group_id"`
-			StudentGroupName string        `json:"student_group_name"`
-			SyllabusID       interface{}   `json:"syllabus_id"`
-			TeacherID        int           `json:"teacher_id"`
-			TrimesterID      int           `json:"trimester_id"`
-		} `json:"discipline"`
-		Teacher               string        `json:"teacher"`
-		Promotion             string        `json:"promotion"`
-		PrestationType        int           `json:"prestation_type"`
-		IsElectronicSignature bool          `json:"is_electronic_signature"`
-		Links                 []interface{} `json:"links"`
-	} `json:"result"`
-	Links []interface{} `json:"links"`
+	ResponseCode int                  `json:"response_code"`
+	Version      string               `json:"version"`
+	Result       []KordisResultAgenda `json:"result"`
+	Links        []interface{}        `json:"links"`
 }

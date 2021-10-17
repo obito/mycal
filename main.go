@@ -9,12 +9,18 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
 	"strings"
+	"time"
 
+	"github.com/jordic/goics"
+
+	"github.com/araddon/dateparse"
 	"github.com/manifoldco/promptui"
 )
 
 func main() {
+
 	prompt := promptui.Prompt{
 		Label: "Username: ",
 	}
@@ -60,6 +66,70 @@ func main() {
 	}
 
 	log.Printf("Login successful. Welcome %s %s (UID: %d).", profile.Result.Firstname, profile.Result.Name, profile.Result.UID)
+
+	prompt = promptui.Prompt{
+		Label: "Start Date (mm/dd/yyyy): ",
+		Validate: func(input string) error {
+			_, err := dateparse.ParseAny(input)
+			if err != nil {
+				return errors.New("invalid date")
+			}
+			return nil
+		},
+	}
+
+	startResult, err := prompt.Run()
+
+	if err != nil {
+		log.Fatalf("Prompt failed %v\n", err)
+	}
+
+	prompt = promptui.Prompt{
+		Label: "End Date (mm/dd/yyyy): ",
+		Validate: func(input string) error {
+			_, err := dateparse.ParseAny(input)
+			if err != nil {
+				return errors.New("invalid date")
+			}
+			return nil
+		},
+	}
+
+	endResult, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("prompt failed %v\n", err)
+	}
+
+	startDate, err := dateparse.ParseAny(startResult)
+	if err != nil {
+		log.Fatalf("parsing start date failed %v\n", err)
+	}
+
+	endDate, err := dateparse.ParseAny(endResult)
+	if err != nil {
+		log.Fatalf("parsing end date failed %v\n", err)
+	}
+
+	agendaResult, err := fetchAgenda(account.AccessToken, fmt.Sprintf("%d", startDate.UnixMilli()), fmt.Sprintf("%d", endDate.UnixMilli()), client)
+	if err != nil {
+		log.Fatalf("error while fetching agenda %v", err)
+	}
+
+	for _, result := range agendaResult.Result {
+		log.Printf("%s en %s - %s avec %s ", result.Type, result.Modality, result.Name, result.Discipline.Teacher)
+	}
+
+	cal := addEvent(agendaResult.Result)
+
+	file, err := os.OpenFile("calendar.ics", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	encoder := goics.NewICalEncode(file)
+
+	cal.Write(encoder)
 }
 
 // loginKordis is used to login on the Kordis platform, giving us an access token
@@ -165,20 +235,6 @@ func fetchMe(accessToken string, client *http.Client) (*KordisResponseProfile, e
 // fetchAgenda is used to fetch the agenda, start & end date are epoch in milliseconds
 func fetchAgenda(accessToken, startTimestamp, endTimestamp string, client *http.Client) (*KordisResponseAgenda, error) {
 
-	/*
-
-
-		now := time.Now()
-		currentYear, currentMonth, _ := now.Date()
-		currentLocation := now.Location()
-
-		firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
-		lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
-
-		log.Print(firstOfMonth.UnixMilli())
-		log.Print(lastOfMonth.UnixMilli())
-	*/
-
 	req, err := http.NewRequest("GET", "https://api.kordis.fr/me/agenda?start="+startTimestamp+"&end="+endTimestamp, nil)
 	if err != nil {
 		return nil, err
@@ -202,5 +258,51 @@ func fetchAgenda(accessToken, startTimestamp, endTimestamp string, client *http.
 		return nil, errors.New("invalid login")
 	}
 
-	return nil, err
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var agendaJSON KordisResponseAgenda
+	err = json.Unmarshal(body, &agendaJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	return &agendaJSON, err
+}
+
+// addEvent function is used to add event into the calendar
+func addEvent(courses []KordisResultAgenda) goics.Componenter {
+
+	c := goics.NewComponent()
+	c.SetType("VCALENDAR")
+	c.AddProperty("CALSCAL", "GREGORIAN")
+
+	for _, course := range courses {
+		startDate := time.Unix(course.StartDate/1000, 0)
+		endDate := time.Unix(course.EndDate/1000, 0)
+		s := goics.NewComponent()
+		s.SetType("VEVENT")
+
+		k, v := goics.FormatDateTimeField("DTSTART", startDate)
+		s.AddProperty(k, v)
+
+		k, v = goics.FormatDateTimeField("DTEND", endDate)
+		s.AddProperty(k, v)
+
+		s.AddProperty("SUMMARY", fmt.Sprintf("%s - %s", course.Type, course.Name))
+
+		if course.Rooms != nil {
+			s.AddProperty("DESCRIPTION", fmt.Sprintf("Avec %s en %s (Campus: %s)", course.Teacher, course.Rooms[0].Name, course.Rooms[0].Campus))
+		} else if course.Modality == "Distanciel" {
+			s.AddProperty("DESCRIPTION", fmt.Sprintf("Avec %s en DISTANCIEL (Check Teams/MyGES)", course.Teacher))
+		} else {
+			s.AddProperty("DESCRIPTION", fmt.Sprintf("Avec %s - Pas de salle précisé", course.Teacher))
+		}
+
+		c.AddComponent(s)
+	}
+
+	return c
 }
