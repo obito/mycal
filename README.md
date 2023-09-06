@@ -9,7 +9,7 @@ MyCal est un outil pour crée un fichier .ICS (iCalendar) de son emploi du temps
 ```
 echo > calendar.ics
 docker build -t mycal .
-docker run -it -v "$(pwd)"/calendar.ics:/opt/calendar.ics mycal
+docker run --rm -it -v "$(pwd)"/calendar.ics:/opt/calendar.ics mycal
 ```
 
 ## Avec le release
