@@ -4,6 +4,16 @@ MyCal est un outil pour crée un fichier .ICS (iCalendar) de son emploi du temps
 
 # Utilisation
 
+## Avec Docker
+
+```
+echo > calendar.ics
+docker build -t mycal .
+docker run -it -v "$(pwd)"/calendar.ics:/opt/calendar.ics mycal
+```
+
+## Avec le release
+
 Il suffit d'aller dans les [release](https://github.com/obito/mycal/releases) (ou de le compiler vous-même) et de télécharger l'éxecutable pour votre plateforme. Ensuite, connectez-vous avec vos identifiants **MyGES**
 
 Le format utilisé pour les dates est mm/dd/yyyy (mois/jour/année, format US).
