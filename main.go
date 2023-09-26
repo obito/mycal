@@ -78,27 +78,30 @@ func main() {
 		},
 	}
 
-	startResult, err := prompt.Run()
+	// startResult, err := prompt.Run()
+	startResult := "08/28/2023"
 
-	if err != nil {
-		log.Fatalf("Prompt failed %v\n", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Prompt failed %v\n", err)
+	// }
 
-	prompt = promptui.Prompt{
-		Label: "End Date (mm/dd/yyyy): ",
-		Validate: func(input string) error {
-			_, err := dateparse.ParseAny(input)
-			if err != nil {
-				return errors.New("invalid date")
-			}
-			return nil
-		},
-	}
+	// prompt = promptui.Prompt{
+	// 	Label: "End Date (mm/dd/yyyy): ",
+	// 	Validate: func(input string) error {
+	// 		_, err := dateparse.ParseAny(input)
+	// 		if err != nil {
+	// 			return errors.New("invalid date")
+	// 		}
+	// 		return nil
+	// 	},
+	// }
 
-	endResult, err := prompt.Run()
-	if err != nil {
-		log.Fatalf("prompt failed %v\n", err)
-	}
+	// endResult, err := prompt.Run()
+	endResult := "07/27/2024"
+
+	// if err != nil {
+	// 	log.Fatalf("prompt failed %v\n", err)
+	// }
 
 	startDate, err := dateparse.ParseAny(startResult)
 	if err != nil {
@@ -121,7 +124,7 @@ func main() {
 
 	cal := addEvent(agendaResult.Result)
 
-	file, err := os.OpenFile("calendar.ics", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("calendar.ics", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -282,13 +285,16 @@ func addEvent(courses []KordisResultAgenda) goics.Componenter {
 	for _, course := range courses {
 		startDate := time.Unix(course.StartDate/1000, 0)
 		endDate := time.Unix(course.EndDate/1000, 0)
+
 		s := goics.NewComponent()
 		s.SetType("VEVENT")
 
 		k, v := goics.FormatDateTimeField("DTSTART", startDate)
+		v = strings.TrimSuffix(v, "\n") + "Z"
 		s.AddProperty(k, v)
 
 		k, v = goics.FormatDateTimeField("DTEND", endDate)
+		v = strings.TrimSuffix(v, "\n") + "Z"
 		s.AddProperty(k, v)
 
 		s.AddProperty("SUMMARY", fmt.Sprintf("%s - %s", course.Type, course.Name))
