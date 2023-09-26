@@ -283,15 +283,18 @@ func addEvent(courses []KordisResultAgenda) goics.Componenter {
 	c.AddProperty("CALSCAL", "GREGORIAN")
 
 	for _, course := range courses {
-		startDate := time.Unix(course.StartDate/1000, 0).In(time.UTC)
-		endDate := time.Unix(course.EndDate/1000, 0).In(time.UTC)
+		startDate := time.Unix(course.StartDate/1000, 0)
+		endDate := time.Unix(course.EndDate/1000, 0)
+
 		s := goics.NewComponent()
 		s.SetType("VEVENT")
 
 		k, v := goics.FormatDateTimeField("DTSTART", startDate)
+		v = strings.TrimSuffix(v, "\n") + "Z"
 		s.AddProperty(k, v)
 
 		k, v = goics.FormatDateTimeField("DTEND", endDate)
+		v = strings.TrimSuffix(v, "\n") + "Z"
 		s.AddProperty(k, v)
 
 		s.AddProperty("SUMMARY", fmt.Sprintf("%s - %s", course.Type, course.Name))
